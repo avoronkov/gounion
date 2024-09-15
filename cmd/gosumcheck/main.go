@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/haya14busa/gosum/checker"
+	"github.com/avoronkov/gounion/checker"
 	"honnef.co/go/lint/lintutil"
 )
 

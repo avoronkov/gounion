@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/haya14busa/gosum"
+	"github.com/avoronkov/gounion"
 	"golang.org/x/tools/go/types/typeutil"
 	"honnef.co/go/lint"
 )
