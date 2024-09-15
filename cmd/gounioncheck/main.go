@@ -1,12 +1,10 @@
 package main
 
 import (
-	"os"
-
 	"github.com/avoronkov/gounion/checker"
-	"honnef.co/go/lint/lintutil"
+	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
 func main() {
-	lintutil.ProcessArgs("gosumcheck", checker.NewChecker(), os.Args[1:])
+	singlechecker.Main(checker.Analyzer)
 }
