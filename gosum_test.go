@@ -1,4 +1,4 @@
-package gosum
+package gounion
 
 import (
 	"go/ast"

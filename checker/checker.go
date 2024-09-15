@@ -39,7 +39,7 @@ func CheckSwitch(f *lint.File) {
 		if named == nil {
 			return true
 		}
-		iface := gosum.NewSumInterface(named, all)
+		iface := gounion.NewSumInterface(named, all)
 		if iface == nil {
 			return true
 		}
@@ -101,14 +101,11 @@ func CheckSwitch(f *lint.File) {
 		}
 
 		if len(uncovered) > 0 {
-			confidence := 0.6 + 0.4*(1-float64(len(uncovered))/float64(len(covered)))
 			typs := make([]string, len(uncovered))
 			for i, typ := range uncovered {
 				typs[i] = types.NewPointer(typ).String()
 			}
-			if confidence > 0.8 {
-				f.Errorf(typeswitch, "uncovered cases for %v type switch\n\t- %v", named.String(), strings.Join(typs, "\n\t- "))
-			}
+			f.Errorf(typeswitch, "uncovered cases for %v type switch\n\t- %v", named.String(), strings.Join(typs, "\n\t- "))
 		}
 
 		return true

@@ -1,5 +1,5 @@
 // Package gosum provides utilities for Sum/Union/Variant like types.
-package gosum
+package gounion
 
 import "go/types"
 
