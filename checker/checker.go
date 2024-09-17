@@ -39,6 +39,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			for _, ptr := range iface.Implements.Pointers {
 				covered[ptr.Elem()] = false
 			}
+			coveredTypes := make(map[types.Type]bool, len(iface.Implements.Types))
+			for _, typ := range iface.Implements.Types {
+				coveredTypes[*typ] = false
+			}
 
 			coveredTypsByInterface := make(map[*types.Named][]types.Type)
 			for _, i := range iface.Implements.Interfaces {
@@ -78,32 +82,34 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						} else {
 							if ptr, ok := typ.(*types.Pointer); ok {
 								covered[ptr.Elem()] = true
-							} // else: untyped nil
+							} else {
+								coveredTypes[typ] = true
+							}
 						}
 					}
 				}
 			}
 
-			var uncovered []types.Type
+			var uncovered []string
 			for elem, b := range covered {
 				if !b {
-					uncovered = append(uncovered, elem)
+					uncovered = append(uncovered, types.NewPointer(elem).String())
+				}
+			}
+			for elem, b := range coveredTypes {
+				if !b {
+					uncovered = append(uncovered, elem.String())
 				}
 			}
 
 			if len(uncovered) > 0 {
-				typs := make([]string, len(uncovered))
-				for i, typ := range uncovered {
-					typs[i] = types.NewPointer(typ).String()
-				}
 				pass.Report(analysis.Diagnostic{
 					Pos:            typeswitch.Pos(),
 					End:            0,
 					Category:       "",
-					Message:        fmt.Sprintf("uncovered cases for %v type switch\n\t- %v", named.String(), strings.Join(typs, "\n\t- ")),
+					Message:        fmt.Sprintf("uncovered cases for %v type switch\n\t- %v", named.String(), strings.Join(uncovered, "\n\t- ")),
 					SuggestedFixes: nil,
 				})
-				// f.Errorf(typeswitch, "uncovered cases for %v type switch\n\t- %v", named.String(), strings.Join(typs, "\n\t- "))
 			}
 
 			return true

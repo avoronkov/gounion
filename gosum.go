@@ -17,6 +17,7 @@ type SumInterface struct {
 	Implements struct {
 		Interfaces []*SumInterface
 		Pointers   []*types.Pointer
+		Types      []*types.Type
 	}
 
 	// "Implements" only holds types in PkgScope. It's especially for "public"
@@ -85,8 +86,11 @@ func newSumInterface(seen map[*types.Named]bool, namedInterface *types.Named, pk
 				if types.AssignableTo(T, U) { // as interface
 					if i := newSumInterface(seen, T.(*types.Named), pkgscope); i != nil {
 						sum.Implements.Interfaces = append(sum.Implements.Interfaces, i)
+					} else {
+						sum.Implements.Types = append(sum.Implements.Types, &T)
 					}
-				} else if !types.IsInterface(T) { // as pointer
+				}
+				if !types.IsInterface(T) { // as pointer
 					if ptr := types.NewPointer(T); types.AssignableTo(ptr, U) {
 						sum.Implements.Pointers = append(sum.Implements.Pointers, ptr)
 					}
