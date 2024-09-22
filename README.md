@@ -1,51 +1,45 @@
-## Sum/Union/Variant Type in Go and Static Check Tool of switch-case handling  
+## Union Type in Go and Static Check Tool of switch-case handling  
 
-[![GoDoc](https://godoc.org/github.com/haya14busa/gosum?status.svg)](https://godoc.org/github.com/haya14busa/gosum)
-[![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-## gosumcheck
+## gounioncheck
 
 ### Installation 
 
 ```
-$ go get -u github.com/haya14busa/gosum/cmd/gosumcheck
+$ go install github.com/avoronkov/gounion/cmd/gounioncheck@latest
 ```
 
 ### Example
 
 ```
-$ gosumcheck go/ast/...
-/usr/lib/go/src/go/ast/commentmap.go:233:3: uncovered cases for ast.Node type switch:
-        - *ast.ChanType
-        - *ast.Ident
-        - *ast.SelectorExpr
-        - *ast.TypeAssertExpr
-        - *ast.CompositeLit
-        - *ast.FieldList
-        - *ast.Package
-        - *ast.ArrayType
-        - *ast.ParenExpr
-        - *ast.BinaryExpr
-        - *ast.UnaryExpr
-        - *ast.BadExpr
-        - *ast.FuncLit
-        - *ast.CommentGroup
-        - *ast.IndexExpr
-        - *ast.MapType
-        - *ast.StructType
-        - *ast.BasicLit
-        - *ast.Ellipsis
-        - *ast.InterfaceType
-        - *ast.Comment
-        - *ast.FuncType
-        - *ast.SliceExpr
-        - *ast.StarExpr
-        - *ast.CallExpr
-        - *ast.KeyValueExpr
-/usr/lib/go/src/go/ast/filter.go:158:2: uncovered cases for ast.Spec type switch:
-        - *ast.ImportSpec
-/usr/lib/go/src/go/ast/filter.go:209:2: uncovered cases for ast.Decl type switch:
-        - *ast.BadDecl
+// main.go
+package main
+
+type Foo interface {
+	foo()
+}
+
+type Bar struct{}
+
+func (b Bar) foo() {}
+
+type Baz struct{}
+
+func (b *Baz) foo() {}
+
+func main() {
+	var foo Foo = &Bar{}
+	switch foo.(type) {
+	case *Bar:
+		// Bar
+	}
+}
 ```
 
-See `gosumcheck -h` and [Sum/Union/Variant Type in Go and Static Check Tool of switch-case handling](https://medium.com/@haya14busa/sum-union-variant-type-in-go-and-static-check-tool-of-switch-case-handling-3bfc61618b1e) for detail.
+```console
+$ gounioncheck .
+main.go:17:2: uncovered cases for main.Foo type switch: *main.Baz, main.Bar
+```
+
+### Additional information
+
+It cheks only so-called "private" interfaces i.e. interfaces with private methods which can be implemented only whithin the package they are declared.
