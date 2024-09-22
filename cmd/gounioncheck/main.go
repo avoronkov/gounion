@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/avoronkov/gounion/checker"
+	"github.com/avoronkov/gounion"
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
 func main() {
-	singlechecker.Main(checker.Analyzer)
+	singlechecker.Main(gounion.Analyzer)
 }

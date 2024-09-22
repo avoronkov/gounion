@@ -1,4 +1,4 @@
-package checker
+package gounion
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/avoronkov/gounion"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -31,7 +30,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			if named == nil {
 				return true
 			}
-			iface := gounion.NewSumInterface(named, all)
+			iface := NewSumInterface(named, all)
 			if iface == nil {
 				return true
 			}
@@ -42,15 +41,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			coveredTypes := make(map[types.Type]bool, len(iface.Implements.Types))
 			for _, typ := range iface.Implements.Types {
 				coveredTypes[*typ] = false
-			}
-
-			coveredTypsByInterface := make(map[*types.Named][]types.Type)
-			for _, i := range iface.Implements.Interfaces {
-				name := i.NamedInterface
-				coveredTypsByInterface[name] = make([]types.Type, len(i.Implements.Pointers))
-				for j, ptr := range i.Implements.Pointers {
-					coveredTypsByInterface[name][j] = ptr.Elem()
-				}
 			}
 			for _, caseClause := range typeswitch.Body.List {
 				c, ok := caseClause.(*ast.CaseClause)
@@ -75,11 +65,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 							continue
 						}
 						typ := tv.Type
-						if types.IsInterface(typ) {
-							for _, typ := range coveredTypsByInterface[typ.(*types.Named)] {
-								covered[typ] = true
-							}
-						} else {
+						if !types.IsInterface(typ) {
 							if ptr, ok := typ.(*types.Pointer); ok {
 								covered[ptr.Elem()] = true
 							} else {
@@ -93,12 +79,12 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			var uncovered []string
 			for elem, b := range covered {
 				if !b {
-					uncovered = append(uncovered, types.NewPointer(elem).String())
+					uncovered = append(uncovered, formatType(elem, true))
 				}
 			}
 			for elem, b := range coveredTypes {
 				if !b {
-					uncovered = append(uncovered, elem.String())
+					uncovered = append(uncovered, formatType(elem, false))
 				}
 			}
 
@@ -107,7 +93,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					Pos:            typeswitch.Pos(),
 					End:            0,
 					Category:       "",
-					Message:        fmt.Sprintf("uncovered cases for %v type switch\n\t- %v", named.String(), strings.Join(uncovered, "\n\t- ")),
+					Message:        fmt.Sprintf("uncovered cases for %v type switch: %v", formatType(named, false), strings.Join(uncovered, ", ")),
 					SuggestedFixes: nil,
 				})
 			}
@@ -155,4 +141,15 @@ func assertExpr(x *ast.TypeSwitchStmt) *ast.TypeAssertExpr {
 		return ae
 	}
 	return nil
+}
+
+func formatType(t types.Type, ptr bool) string {
+	str := t.String()
+	if idx := strings.LastIndex(str, "/"); idx >= 0 {
+		str = str[idx+1:]
+	}
+	if ptr {
+		str = "*" + str
+	}
+	return str
 }
